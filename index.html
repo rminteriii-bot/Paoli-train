@@ -1,0 +1,64 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Next Train</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#111; color:#fff; }
+    .card { padding:20px; }
+    .title { font-size:28px; font-weight:700; margin-bottom:10px; }
+    .route { font-size:20px; opacity:.85; margin-bottom:18px; }
+    .row { display:flex; justify-content:space-between; font-size:22px; padding:10px 0; border-top:1px solid rgba(255,255,255,.12); }
+    .label { opacity:.7; margin-right:16px; }
+    .value { font-weight:600; }
+    .small { font-size:16px; opacity:.7; margin-top:14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title">🚆 Next Train</div>
+    <div class="route">Paoli → 30th Street</div>
+
+    <div id="content">
+      <div class="small">Loading…</div>
+    </div>
+
+    <div class="small" id="updated"></div>
+  </div>
+
+<script>
+const url = "https://www3.septa.org/api/NextToArrive/index.php?req1=Paoli&req2=30th%20Street%20Station&req3=1";
+
+async function load() {
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    const t = Array.isArray(data) && data.length ? data[0] : null;
+
+    if (!t) {
+      document.getElementById("content").innerHTML = "<div class='small'>No trains found.</div>";
+      return;
+    }
+
+    const late = (t.late && t.late !== "0") ? `${t.late} min late` : "On time";
+    const status = t.status || late;
+
+    document.getElementById("content").innerHTML = `
+      <div class="row"><div class="label">Departs</div><div class="value">${t.orig_departure_time || "—"}</div></div>
+      <div class="row"><div class="label">Arrives</div><div class="value">${t.orig_arrival_time || "—"}</div></div>
+      <div class="row"><div class="label">Status</div><div class="value">${status}</div></div>
+      <div class="row"><div class="label">Train #</div><div class="value">${t.train_id || "—"}</div></div>
+    `;
+    document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById("content").innerHTML = "<div class='small'>Error loading SEPTA data.</div>";
+  }
+}
+
+load();
+setInterval(load, 60 * 1000);
+</script>
+</body>
+</html>
