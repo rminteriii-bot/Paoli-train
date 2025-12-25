@@ -34,11 +34,13 @@ const url =
 
 function renderTrain(t) {
   if (!t) {
-    document.getElementById("content").innerHTML = "<div class='small'>No trains found.</div>";
+    document.getElementById("content").innerHTML =
+      "<div class='small'>No trains found.</div>";
     return;
   }
 
-  const late = (t.late && t.late !== "0") ? `${t.late} min late` : "On time";
+  const late =
+    t.late && t.late !== "0" ? `${t.late} min late` : "On time";
   const status = t.status || late;
 
   document.getElementById("content").innerHTML = `
@@ -47,32 +49,34 @@ function renderTrain(t) {
     <div class="row"><div class="label">Status</div><div class="value">${status}</div></div>
     <div class="row"><div class="label">Train #</div><div class="value">${t.train_id || "—"}</div></div>
   `;
-  document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+  document.getElementById("updated").textContent =
+    "Updated: " + new Date().toLocaleTimeString();
 }
 
-// JSONP callback (SEPTA calls this function name)
-window.septaCb = function(data) {
+// JSONP callback
+window.septaCb = function (data) {
   const t = Array.isArray(data) && data.length ? data[0] : null;
   renderTrain(t);
 };
 
 function loadJsonp() {
-  // remove previous JSONP script if it exists
   const old = document.getElementById("septa_jsonp");
   if (old) old.remove();
 
   const s = document.createElement("script");
   s.id = "septa_jsonp";
-  s.src = url + "&_=" + Date.now(); // cache buster
+  s.src = url + "&_=" + Date.now();
   s.onerror = () => {
-    document.getElementById("content").innerHTML = "<div class='small'>Error loading SEPTA data.</div>";
+    document.getElementById("content").innerHTML =
+      "<div class='small'>Error loading SEPTA data.</div>";
   };
   document.body.appendChild(s);
 }
 
 loadJsonp();
-setInterval(loadJsonp, 60 * 1000);
+setInterval(loadJsonp, 60000);
 </script>
+
 
 </body>
 </html>
