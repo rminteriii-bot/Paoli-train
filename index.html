@@ -29,36 +29,50 @@
   </div>
 
 <script>
-const url = "https://www3.septa.org/api/NextToArrive/index.php?req1=Paoli&req2=30th%20Street%20Station&req3=1";
+const url =
+  "https://www3.septa.org/hackathon/NextToArrive/?req1=Paoli&req2=30th%20Street%20Station&req3=1&callback=septaCb";
 
-async function load() {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    const data = await res.json();
-    const t = Array.isArray(data) && data.length ? data[0] : null;
-
-    if (!t) {
-      document.getElementById("content").innerHTML = "<div class='small'>No trains found.</div>";
-      return;
-    }
-
-    const late = (t.late && t.late !== "0") ? `${t.late} min late` : "On time";
-    const status = t.status || late;
-
-    document.getElementById("content").innerHTML = `
-      <div class="row"><div class="label">Departs</div><div class="value">${t.orig_departure_time || "—"}</div></div>
-      <div class="row"><div class="label">Arrives</div><div class="value">${t.orig_arrival_time || "—"}</div></div>
-      <div class="row"><div class="label">Status</div><div class="value">${status}</div></div>
-      <div class="row"><div class="label">Train #</div><div class="value">${t.train_id || "—"}</div></div>
-    `;
-    document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
-  } catch (e) {
-    document.getElementById("content").innerHTML = "<div class='small'>Error loading SEPTA data.</div>";
+function renderTrain(t) {
+  if (!t) {
+    document.getElementById("content").innerHTML = "<div class='small'>No trains found.</div>";
+    return;
   }
+
+  const late = (t.late && t.late !== "0") ? `${t.late} min late` : "On time";
+  const status = t.status || late;
+
+  document.getElementById("content").innerHTML = `
+    <div class="row"><div class="label">Departs</div><div class="value">${t.orig_departure_time || "—"}</div></div>
+    <div class="row"><div class="label">Arrives</div><div class="value">${t.orig_arrival_time || "—"}</div></div>
+    <div class="row"><div class="label">Status</div><div class="value">${status}</div></div>
+    <div class="row"><div class="label">Train #</div><div class="value">${t.train_id || "—"}</div></div>
+  `;
+  document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
 }
 
-load();
-setInterval(load, 60 * 1000);
+// JSONP callback (SEPTA calls this function name)
+window.septaCb = function(data) {
+  const t = Array.isArray(data) && data.length ? data[0] : null;
+  renderTrain(t);
+};
+
+function loadJsonp() {
+  // remove previous JSONP script if it exists
+  const old = document.getElementById("septa_jsonp");
+  if (old) old.remove();
+
+  const s = document.createElement("script");
+  s.id = "septa_jsonp";
+  s.src = url + "&_=" + Date.now(); // cache buster
+  s.onerror = () => {
+    document.getElementById("content").innerHTML = "<div class='small'>Error loading SEPTA data.</div>";
+  };
+  document.body.appendChild(s);
+}
+
+loadJsonp();
+setInterval(loadJsonp, 60 * 1000);
 </script>
+
 </body>
 </html>
